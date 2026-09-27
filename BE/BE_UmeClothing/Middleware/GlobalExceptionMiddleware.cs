@@ -1,8 +1,7 @@
 using BE_UmeClothing.DTOs.Common;
 using BE_UmeClothing.Helpers;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-
+using Npgsql;
 namespace BE_UmeClothing.Middleware;
 
 public class GlobalExceptionMiddleware
@@ -49,7 +48,7 @@ public class GlobalExceptionMiddleware
     }
 
     private static bool IsUniqueViolation(DbUpdateException ex) =>
-        ex.InnerException is SqlException { Number: 2601 or 2627 };
+        ex.InnerException is PostgresException { SqlState: "23505" };
 
     private static async Task WriteAsync(HttpContext context, int statusCode, string message, IEnumerable<string>? errors = null)
     {

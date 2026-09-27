@@ -36,7 +36,7 @@ if (string.IsNullOrWhiteSpace(jwt.Key) || jwt.Key.Length < 32)
 
 // ---------------- Database ----------------
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(config.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(config.GetConnectionString("DefaultConnection")));
 
 // ---------------- Controllers / JSON / Validation ----------------
 builder.Services.AddControllers()

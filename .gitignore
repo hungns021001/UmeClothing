@@ -1,0 +1,25 @@
+# .NET build output and IDE state
+**/bin/
+**/obj/
+**/.vs/
+**/*.user
+
+# Frontend dependencies and build output
+**/node_modules/
+**/dist/
+
+# Local environment and machine-specific configuration
+**/.env
+**/.env.*
+!**/.env.example
+**/appsettings.*.local.json
+
+# Uploaded files, archives, and logs
+**/wwwroot/uploads/*
+!**/wwwroot/uploads/.gitkeep
+*.zip
+*.log
+
+# Operating system files
+.DS_Store
+Thumbs.db

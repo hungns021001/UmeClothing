@@ -23,7 +23,7 @@ Chỉ dùng EF Core **8.x**. Không nâng lên EF Core 9/10.
 | Khóa | Ý nghĩa |
 |---|---|
 | `ConnectionStrings:DefaultConnection` | Chuỗi kết nối SQL Server (mặc định LocalDB) |
-| `Jwt:Key` | **Bắt buộc**, ≥ 32 ký tự. Dev có key mẫu trong `appsettings.Development.json` |
+| `Jwt:Key` | **Bắt buộc**, ≥ 32 ký tự. Lưu ngoài mã nguồn bằng user-secrets hoặc biến môi trường |
 | `Jwt:Issuer`, `Jwt:Audience`, `Jwt:ExpiryMinutes` | Thông số JWT. Access token mặc định 15 phút (ngắn vì không thu hồi được giữa chừng) |
 | `Jwt:RefreshTokenExpiryDays` | Thời hạn refresh token, mặc định 30 ngày. Refresh token lưu trong DB nên thu hồi được (đổi mật khẩu, bị khóa) |
 | `Cors:AllowedOrigins` | Danh sách origin của frontend |
@@ -33,7 +33,7 @@ Chỉ dùng EF Core **8.x**. Không nâng lên EF Core 9/10.
 | `Booking:UtcOffsetHours` | Múi giờ nghiệp vụ để xác định "hôm nay" (VN = 7) |
 | `ImageStorage:MaxFileSizeBytes`, `MaxImagesPerProduct` | Giới hạn upload |
 | `Database:AutoMigrateAndSeed` | `true` → tự migrate + seed khi khởi động (Development bật sẵn) |
-| `Seed:AdminPassword`, `Seed:StaffPassword` | Mật khẩu tài khoản seed (chỉ dùng khi seed) |
+| `Seed:AdminEmail`, `Seed:AdminPassword`, `Seed:StaffEmail`, `Seed:StaffPassword` | Email đăng nhập và mật khẩu tài khoản seed (chỉ dùng khi seed) |
 
 ### Production / bí mật
 
@@ -45,7 +45,19 @@ export ConnectionStrings__DefaultConnection="Server=...;Database=UmeClothing;...
 export Cors__AllowedOrigins__0="https://your-frontend.example.com"
 ```
 
-Hoặc user-secrets khi dev: `dotnet user-secrets init` rồi `dotnet user-secrets set "Jwt:Key" "..."`.
+Khi dev, cấu hình bí mật cục bộ bằng user-secrets (không được lưu trong repo):
+
+```powershell
+cd BE/BE_UmeClothing
+dotnet user-secrets set "Jwt:Key" "<chuỗi ngẫu nhiên >= 32 ký tự>"
+dotnet user-secrets set "Seed:AdminEmail" "<email-admin>"
+dotnet user-secrets set "Seed:AdminPassword" "<mật-khẩu-mạnh>"
+dotnet user-secrets set "Seed:StaffEmail" "<email-nhân-viên>"
+dotnet user-secrets set "Seed:StaffPassword" "<mật-khẩu-mạnh>"
+```
+
+`UserSecretsId` đã được khai báo trong project; các giá trị trên được lưu ngoài thư mục mã nguồn.
+Ở production, dùng secret manager của nền tảng hoặc biến môi trường tương ứng (ví dụ `Seed__AdminPassword`).
 
 ## 3. Database & Migration
 
