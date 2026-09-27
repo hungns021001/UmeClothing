@@ -1,0 +1,6 @@
+@BE_UmeClothing_HostAddress = http://localhost:5288
+
+GET {{BE_UmeClothing_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
