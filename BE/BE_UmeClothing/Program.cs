@@ -197,11 +197,8 @@ if (config.GetValue<bool>("Database:AutoMigrateAndSeed"))
 // ---------------- Pipeline ----------------
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
-if (app.Environment.IsDevelopment())
-{
     app.UseSwagger();
     app.UseSwaggerUI();
-}
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
