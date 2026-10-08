@@ -14,12 +14,14 @@ import { useDebounce } from '../../hooks/useDebounce';
 import { BOOKING_STATUSES, type BookingStatus } from '../../types';
 import { formatCurrency, formatDate, formatDateTime } from '../../utils/format';
 import { BOOKING_STATUS_LABEL, NEXT_ACTIONS } from '../../utils/labels';
+import { todayISO } from '../../utils/dates';
 
 function BookingDetailModal({ id, onClose }: { id: number; onClose: () => void }) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [note, setNote] = useState('');
   const [pending, setPending] = useState<{ status: BookingStatus; label: string; danger?: boolean } | null>(null);
+  const [actualReturnDate, setActualReturnDate] = useState(todayISO());
 
   const detailQuery = useQuery({ queryKey: ['admin', 'booking', id], queryFn: () => adminApi.booking(id) });
 
@@ -38,7 +40,8 @@ function BookingDetailModal({ id, onClose }: { id: number; onClose: () => void }
   }, [onClose, pending]);
 
   const statusMutation = useMutation({
-    mutationFn: (status: BookingStatus) => adminApi.updateStatus(id, status, note.trim()),
+    mutationFn: (status: BookingStatus) =>
+      adminApi.updateStatus(id, status, note.trim(), status === 'Returned' ? actualReturnDate : undefined),
     onSuccess: (b) => {
       toast('success', `Đơn ${b.bookingCode} → ${BOOKING_STATUS_LABEL[b.status]}.`);
       setPending(null);
@@ -83,11 +86,14 @@ function BookingDetailModal({ id, onClose }: { id: number; onClose: () => void }
             <div className="grid gap-2 rounded-lg bg-slate-50 p-4 sm:grid-cols-2">
               <div>
                 <p className="text-xs text-slate-400">Khách hàng</p>
-                <p className="font-medium">{b.customerName}</p>
+                <p className="font-medium">
+                  {b.customerName}
+                  {b.isGuest && <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">Khách vãng lai</span>}
+                </p>
               </div>
               <div>
                 <p className="text-xs text-slate-400">Liên hệ</p>
-                <p>{b.customerEmail}</p>
+                {b.customerEmail && <p>{b.customerEmail}</p>}
                 <p>{b.customerPhone ?? '—'}</p>
               </div>
               <div>
@@ -126,9 +132,15 @@ function BookingDetailModal({ id, onClose }: { id: number; onClose: () => void }
                 <span className="text-slate-500">Tiền cọc</span>
                 <span>{formatCurrency(b.deposit)}</span>
               </div>
+              {b.lateFee > 0 && (
+                <div className="flex justify-between text-amber-700">
+                  <span>Phụ thu trả muộn {b.actualReturnDate && `(trả ${formatDate(b.actualReturnDate)})`}</span>
+                  <span>{formatCurrency(b.lateFee)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-base font-semibold">
                 <span>Tổng cộng</span>
-                <span className="text-brand-700">{formatCurrency(b.total)}</span>
+                <span className="text-brand-700">{formatCurrency(b.grandTotal)}</span>
               </div>
             </div>
 
@@ -146,6 +158,25 @@ function BookingDetailModal({ id, onClose }: { id: number; onClose: () => void }
               <textarea id="admin-note" className="input min-h-[72px]" maxLength={1000} value={note} onChange={(e) => setNote(e.target.value)} />
               <p className="mt-1 text-xs text-slate-400">Ghi chú được lưu khi bạn chuyển trạng thái đơn.</p>
             </div>
+
+            {b.status === 'Renting' && (
+              <div>
+                <label htmlFor="actual-return" className="label">
+                  Ngày trả thực tế (khi bấm "Đã nhận lại đồ")
+                </label>
+                <input
+                  id="actual-return"
+                  type="date"
+                  className="input"
+                  min={b.startDate}
+                  value={actualReturnDate}
+                  onChange={(e) => setActualReturnDate(e.target.value)}
+                />
+                <p className="mt-1 text-xs text-slate-400">
+                  Hạn trả dự kiến: {formatDate(b.endDate)}. Trả sau ngày này sẽ tự tính phụ thu.
+                </p>
+              </div>
+            )}
 
             {NEXT_ACTIONS[b.status].length > 0 ? (
               <div className="flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-4">
@@ -259,8 +290,11 @@ export default function AdminBookingsPage() {
                 <tr key={b.id} className="hover:bg-slate-50">
                   <td className="whitespace-nowrap px-4 py-3 font-semibold text-brand-700">{b.bookingCode}</td>
                   <td className="px-4 py-3">
-                    <p className="font-medium text-slate-900">{b.customerName}</p>
-                    <p className="text-xs text-slate-400">{b.customerEmail}</p>
+                    <p className="font-medium text-slate-900">
+                      {b.customerName}
+                      {b.isGuest && <span className="ml-1.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">Vãng lai</span>}
+                    </p>
+                    <p className="text-xs text-slate-400">{b.customerEmail ?? b.customerPhone}</p>
                   </td>
                   <td className="px-4 py-3 text-slate-600">
                     {b.items.slice(0, 2).map((i) => `${i.productName} (${i.size})`).join(', ')}

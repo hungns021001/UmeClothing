@@ -17,6 +17,7 @@ import { useToast } from '../contexts/ToastContext';
 import type { Product, ProductAvailabilityChangedEvent } from '../types';
 import { MAX_RENTAL_DAYS, diffDays } from '../utils/dates';
 import { formatCurrency, formatDate } from '../utils/format';
+import GuestContactFields, { validateGuestContact, type GuestContact } from '../components/GuestContactFields';
 import { resolveImageUrl } from '../utils/image';
 
 export default function CartPage() {
@@ -32,6 +33,9 @@ export default function CartPage() {
   const [note, setNote] = useState('');
   const [calendarMessage, setCalendarMessage] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [guestMode, setGuestMode] = useState(false);
+  const [guest, setGuest] = useState<GuestContact>({ name: '', phone: '' });
+  const [guestError, setGuestError] = useState<string | null>(null);
 
   const datesReady = !!startDate && !!endDate;
 
@@ -76,12 +80,21 @@ export default function CartPage() {
 
   const checkoutMutation = useMutation({
     mutationFn: () =>
-      bookingsApi.create({
-        startDate: startDate as string,
-        endDate: endDate as string,
-        customerNote: note.trim() || undefined,
-        items: items.map((i) => ({ variantId: i.variantId })),
-      }),
+      isAuthenticated
+        ? bookingsApi.create({
+            startDate: startDate as string,
+            endDate: endDate as string,
+            customerNote: note.trim() || undefined,
+            items: items.map((i) => ({ variantId: i.variantId })),
+          })
+        : bookingsApi.createGuest({
+            guestName: guest.name.trim(),
+            guestPhone: guest.phone.trim(),
+            startDate: startDate as string,
+            endDate: endDate as string,
+            customerNote: note.trim() || undefined,
+            items: items.map((i) => ({ variantId: i.variantId })),
+          }),
     onSuccess: (booking) => {
       setConfirmOpen(false);
       clear();
@@ -143,8 +156,9 @@ export default function CartPage() {
 
   const onCheckoutClick = () => {
     if (!isAuthenticated) {
-      navigate('/login', { state: { from: location.pathname } });
-      return;
+      const err = validateGuestContact(guest);
+      setGuestError(err);
+      if (err) return;
     }
     setConfirmOpen(true);
   };
@@ -309,14 +323,38 @@ export default function CartPage() {
             <p className="text-sm text-slate-500">Tài khoản {user?.role} không thể đặt thuê. Hãy dùng tài khoản khách hàng.</p>
           )}
 
-          <button
-            type="button"
-            className="btn-primary w-full py-3"
-            disabled={hasBroken || !allOk || (isAuthenticated && !isCustomer)}
-            onClick={onCheckoutClick}
-          >
-            {isAuthenticated ? `Đặt thuê ${items.length} sản phẩm` : 'Đăng nhập để đặt thuê'}
-          </button>
+          {!isAuthenticated && allOk && (
+            guestMode ? (
+              <>
+                <GuestContactFields value={guest} onChange={setGuest} />
+                {guestError && (
+                  <p className="text-sm text-red-600" role="alert">
+                    {guestError}
+                  </p>
+                )}
+              </>
+            ) : (
+              <div className="flex gap-2">
+                <button type="button" className="btn-secondary flex-1" onClick={() => navigate('/login', { state: { from: location.pathname } })}>
+                  Đăng nhập
+                </button>
+                <button type="button" className="btn-secondary flex-1" onClick={() => setGuestMode(true)}>
+                  Không cần tài khoản
+                </button>
+              </div>
+            )
+          )}
+
+          {(isAuthenticated || guestMode) && (
+            <button
+              type="button"
+              className="btn-primary w-full py-3"
+              disabled={hasBroken || !allOk || (isAuthenticated && !isCustomer)}
+              onClick={onCheckoutClick}
+            >
+              {`Đặt thuê ${items.length} sản phẩm`}
+            </button>
+          )}
         </aside>
       </div>
 
@@ -328,6 +366,11 @@ export default function CartPage() {
         onConfirm={() => checkoutMutation.mutate()}
         onCancel={() => setConfirmOpen(false)}
       >
+        {!isAuthenticated && (
+          <p className="mb-2 text-slate-600">
+            {guest.name} · {guest.phone}
+          </p>
+        )}
         <ul className="list-disc pl-5">
           {rows.map((r) => (
             <li key={r.item.variantId}>

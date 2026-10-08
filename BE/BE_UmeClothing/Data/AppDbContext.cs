@@ -107,9 +107,12 @@ public class AppDbContext : DbContext
             e.ToTable("Bookings");
             e.HasKey(x => x.Id);
             e.Property(x => x.BookingCode).HasMaxLength(30).IsRequired();
+            e.Property(x => x.GuestName).HasMaxLength(150);
+            e.Property(x => x.GuestPhone).HasMaxLength(20);
             e.Property(x => x.Subtotal).HasColumnType("decimal(18,2)");
             e.Property(x => x.Deposit).HasColumnType("decimal(18,2)");
             e.Property(x => x.Total).HasColumnType("decimal(18,2)");
+            e.Property(x => x.LateFee).HasColumnType("decimal(18,2)");
             e.Property(x => x.CustomerNote).HasMaxLength(1000);
             e.Property(x => x.AdminNote).HasMaxLength(1000);
             e.Property(x => x.RowVersion).IsRowVersion();
@@ -117,6 +120,8 @@ public class AppDbContext : DbContext
             e.HasIndex(x => x.BookingCode).IsUnique();
             e.HasIndex(x => x.CustomerId);
             e.HasIndex(x => new { x.Status, x.CreatedAt });
+            // Phục vụ tra cứu đơn của khách vãng lai (mã đơn + SĐT).
+            e.HasIndex(x => x.GuestPhone);
 
             e.HasOne(x => x.Customer)
                 .WithMany(u => u.Bookings)

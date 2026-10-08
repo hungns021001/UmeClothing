@@ -1,5 +1,5 @@
 import { cleanParams, http, unwrap } from './client';
-import type { AdminBooking, BookingStatus, CalendarItem, CustomerListItem, DashboardStats, PagedResult } from '../types';
+import type { AdminBooking, BookingStatus, CalendarItem, CustomerListItem, DashboardStats, PagedResult, RevenueReport } from '../types';
 
 export const adminApi = {
   dashboard: () => unwrap<DashboardStats>(http.get('/api/admin/dashboard')),
@@ -18,6 +18,11 @@ export const adminApi = {
 
   booking: (id: number) => unwrap<AdminBooking>(http.get(`/api/admin/bookings/${id}`)),
 
-  updateStatus: (id: number, status: BookingStatus, adminNote?: string) =>
-    unwrap<AdminBooking>(http.put(`/api/admin/bookings/${id}/status`, { status, adminNote: adminNote || undefined })),
+  updateStatus: (id: number, status: BookingStatus, adminNote?: string, actualReturnDate?: string) =>
+    unwrap<AdminBooking>(
+      http.put(`/api/admin/bookings/${id}/status`, { status, adminNote: adminNote || undefined, actualReturnDate: actualReturnDate || undefined }),
+    ),
+
+  revenue: (from: string, to: string, groupBy: 'day' | 'week' | 'month') =>
+    unwrap<RevenueReport>(http.get('/api/admin/revenue', { params: cleanParams({ from, to, groupBy }) })),
 };

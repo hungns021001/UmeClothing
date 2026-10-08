@@ -51,23 +51,48 @@ public class BookingService : IBookingService
     }
 
     // ------------------------------------------------------------------
-    // CREATE: transaction + khóa hàng ProductVariant (UPDLOCK, HOLDLOCK) + kiểm tra lại availability
+    // CREATE (customer đã đăng nhập / guest) — dùng chung lõi CreateInternalAsync
     // ------------------------------------------------------------------
-    public async Task<BookingDto> CreateAsync(int customerId, CreateBookingRequest request, CancellationToken ct = default)
+    public Task<BookingDto> CreateAsync(int customerId, CreateBookingRequest request, CancellationToken ct = default) =>
+        CreateInternalAsync(customerId, null, null, request.StartDate, request.EndDate, request.CustomerNote, request.Items, ct);
+
+    public async Task<BookingDto> CreateGuestAsync(CreateGuestBookingRequest request, CancellationToken ct = default)
+    {
+        var phone = NormalizePhone(request.GuestPhone);
+        return await CreateInternalAsync(null, request.GuestName.Trim(), phone, request.StartDate, request.EndDate, request.CustomerNote, request.Items, ct);
+    }
+
+    /// <summary>
+    /// Lõi tạo đơn dùng chung cho cả hai luồng: transaction + khóa hàng ProductVariant (UPDLOCK, HOLDLOCK) +
+    /// kiểm tra lại availability. customerId có giá trị = khách đã đăng nhập; null = guest (guestName/guestPhone bắt buộc).
+    /// </summary>
+    private async Task<BookingDto> CreateInternalAsync(
+        int? customerId, string? guestName, string? guestPhone,
+        DateOnly startDate, DateOnly endDate, string? customerNote,
+        List<CreateBookingItemRequest> requestItems, CancellationToken ct)
     {
         // 1. Validate request
         var today = _opt.Today();
-        ValidateDates(request.StartDate, request.EndDate, today);
+        ValidateDates(startDate, endDate, today);
 
-        if (request.Items.Count > _opt.MaxItemsPerBooking)
+        if (requestItems.Count > _opt.MaxItemsPerBooking)
             throw new BadRequestException($"Mỗi đơn tối đa {_opt.MaxItemsPerBooking} sản phẩm.");
 
-        var variantIds = request.Items.Select(i => i.VariantId).ToList();
+        var variantIds = requestItems.Select(i => i.VariantId).ToList();
         if (variantIds.Distinct().Count() != variantIds.Count)
             throw new BadRequestException("Sản phẩm/size bị trùng trong đơn.");
 
-        var customer = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == customerId && u.IsActive, ct)
-                       ?? throw new UnauthorizedException("Tài khoản không hợp lệ hoặc đã bị vô hiệu hóa.");
+        string displayName;
+        if (customerId.HasValue)
+        {
+            var customer = await _db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == customerId.Value && u.IsActive, ct)
+                           ?? throw new UnauthorizedException("Tài khoản không hợp lệ hoặc đã bị vô hiệu hóa.");
+            displayName = customer.FullName;
+        }
+        else
+        {
+            displayName = guestName ?? string.Empty;
+        }
 
         int bookingId;
 
@@ -75,7 +100,6 @@ public class BookingService : IBookingService
         await using (var tx = await _db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, ct))
         {
             // 3-4. Khóa các hàng ProductVariant (theo thứ tự Id tăng dần để tránh deadlock).
-            //      Người đến sau sẽ chờ đến khi giao dịch trước commit/rollback rồi mới kiểm tra availability.
             await LockVariantsAsync(variantIds, ct);
 
             var variants = await _db.ProductVariants.Include(v => v.Product)
@@ -91,7 +115,7 @@ public class BookingService : IBookingService
                 throw new BadRequestException("Có sản phẩm/size hiện không nhận đặt thuê.", notBookable);
 
             // 5. Kiểm tra availability trên backend (đã nằm trong lock)
-            var blockedIds = await _availability.GetBlockedVariantIdsAsync(request.StartDate, request.EndDate, variantIds, null, ct);
+            var blockedIds = await _availability.GetBlockedVariantIdsAsync(startDate, endDate, variantIds, null, ct);
             if (blockedIds.Count > 0)
             {
                 var names = variants.Where(v => blockedIds.Contains(v.Id)).Select(v => $"{v.Product.Name} (size {v.Size})").ToList();
@@ -99,17 +123,19 @@ public class BookingService : IBookingService
             }
 
             // 6. Tạo Booking + BookingItems. Backend tự tính tiền từ giá hiện tại và snapshot vào item.
-            var days = request.EndDate.DayNumber - request.StartDate.DayNumber;
-            var itemNotes = request.Items.ToDictionary(i => i.VariantId, i => string.IsNullOrWhiteSpace(i.Note) ? null : i.Note.Trim());
+            var days = endDate.DayNumber - startDate.DayNumber;
+            var itemNotes = requestItems.ToDictionary(i => i.VariantId, i => string.IsNullOrWhiteSpace(i.Note) ? null : i.Note.Trim());
 
             var booking = new Booking
             {
                 BookingCode = await GenerateCodeAsync(ct),
                 CustomerId = customerId,
-                StartDate = request.StartDate,
-                EndDate = request.EndDate,
+                GuestName = customerId.HasValue ? null : guestName,
+                GuestPhone = customerId.HasValue ? null : guestPhone,
+                StartDate = startDate,
+                EndDate = endDate,
                 Status = BookingStatus.Pending,
-                CustomerNote = string.IsNullOrWhiteSpace(request.CustomerNote) ? null : request.CustomerNote.Trim()
+                CustomerNote = string.IsNullOrWhiteSpace(customerNote) ? null : customerNote.Trim()
             };
 
             foreach (var v in variants)
@@ -121,8 +147,8 @@ public class BookingService : IBookingService
                     RentalPrice = v.Product.RentalPrice,
                     DepositPrice = v.Product.DepositPrice,
                     Quantity = 1,
-                    StartDate = request.StartDate,
-                    EndDate = request.EndDate,
+                    StartDate = startDate,
+                    EndDate = endDate,
                     Note = itemNotes[v.Id]
                 });
             }
@@ -144,7 +170,7 @@ public class BookingService : IBookingService
         try
         {
             await _notifier.BookingCreatedAsync(new BookingCreatedEvent(
-                created.Id, created.BookingCode, customer.FullName, created.CreatedAt, created.Status));
+                created.Id, created.BookingCode, displayName, created.CreatedAt, created.Status));
             await _notifier.ProductAvailabilityChangedAsync(AvailabilityEvents(created));
             await _notifier.DashboardUpdatedAsync(await _admin.GetDashboardStatsAsync());
         }
@@ -180,6 +206,7 @@ public class BookingService : IBookingService
         var booking = await Detailed().AsNoTracking().FirstOrDefaultAsync(b => b.Id == bookingId, ct);
 
         // Trả 404 (không phải 403) khi không phải chủ đơn để không lộ việc đơn có tồn tại.
+        // Đơn của guest (CustomerId null) không bao giờ thuộc về một customerId cụ thể.
         if (booking is null || (!isStaff && booking.CustomerId != userId))
             throw new NotFoundException("Không tìm thấy đơn thuê.");
 
@@ -191,6 +218,40 @@ public class BookingService : IBookingService
         var booking = await Detailed().FirstOrDefaultAsync(b => b.Id == bookingId && b.CustomerId == customerId, ct)
                       ?? throw new NotFoundException("Không tìm thấy đơn thuê.");
 
+        return await CancelPendingAsync(booking, ct);
+    }
+
+    // ------------------------------------------------------------------
+    // GUEST LOOKUP (không cần tài khoản) — xác thực bằng Mã đơn + SĐT
+    // ------------------------------------------------------------------
+    public async Task<BookingDto> LookupGuestAsync(BookingLookupRequest request, CancellationToken ct = default)
+    {
+        var booking = await FindGuestBookingAsync(request, ct);
+        return booking.ToDto();
+    }
+
+    public async Task<BookingDto> CancelGuestAsync(BookingLookupRequest request, CancellationToken ct = default)
+    {
+        var booking = await FindGuestBookingAsync(request, ct);
+        return await CancelPendingAsync(booking, ct);
+    }
+
+    /// <summary>Thông điệp lỗi giống nhau dù mã đơn sai hay SĐT sai, tránh lộ mã đơn nào tồn tại.</summary>
+    private async Task<Booking> FindGuestBookingAsync(BookingLookupRequest request, CancellationToken ct)
+    {
+        const string genericError = "Không tìm thấy đơn với mã và số điện thoại này.";
+        var code = request.BookingCode.Trim().ToUpperInvariant();
+        var phone = NormalizePhone(request.Phone);
+
+        var booking = await Detailed().FirstOrDefaultAsync(b => b.BookingCode == code, ct);
+        if (booking is null || booking.GuestPhone is null || NormalizePhone(booking.GuestPhone) != phone)
+            throw new NotFoundException(genericError);
+
+        return booking;
+    }
+
+    private async Task<BookingDto> CancelPendingAsync(Booking booking, CancellationToken ct)
+    {
         if (booking.Status != BookingStatus.Pending)
             throw new BadRequestException("Chỉ có thể tự hủy đơn đang chờ xác nhận. Với đơn đã xác nhận, vui lòng liên hệ cửa hàng.");
 
@@ -211,6 +272,9 @@ public class BookingService : IBookingService
         return booking.ToDto();
     }
 
+    private static string NormalizePhone(string phone) =>
+        new string(phone.Where(char.IsDigit).ToArray());
+
     // ------------------------------------------------------------------
     // ADMIN / STAFF
     // ------------------------------------------------------------------
@@ -228,9 +292,11 @@ public class BookingService : IBookingService
         {
             var s = query.Search.Trim();
             q = q.Where(b => b.BookingCode.Contains(s)
-                             || b.Customer.FullName.Contains(s)
-                             || b.Customer.Email.Contains(s)
-                             || (b.Customer.Phone != null && b.Customer.Phone.Contains(s)));
+                             || (b.Customer != null && b.Customer.FullName.Contains(s))
+                             || (b.Customer != null && b.Customer.Email.Contains(s))
+                             || (b.Customer != null && b.Customer.Phone != null && b.Customer.Phone.Contains(s))
+                             || (b.GuestName != null && b.GuestName.Contains(s))
+                             || (b.GuestPhone != null && b.GuestPhone.Contains(s)));
         }
 
         var total = await q.CountAsync(ct);
@@ -275,6 +341,20 @@ public class BookingService : IBookingService
                     "Không thể xác nhận: sản phẩm/size đã được đặt bởi đơn khác trong khoảng thời gian này (đơn có thể đã quá hạn giữ lịch).",
                     names);
             }
+        }
+
+        // Renting -> Returned: tính phụ thu trả muộn nếu trả sau EndDate dự kiến.
+        if (old == BookingStatus.Renting && request.Status == BookingStatus.Returned)
+        {
+            var actualReturn = request.ActualReturnDate ?? _opt.Today();
+            if (actualReturn < booking.StartDate)
+                throw new BadRequestException("Ngày trả thực tế không được trước ngày nhận.");
+
+            booking.ActualReturnDate = actualReturn;
+            var lateDays = Math.Max(0, actualReturn.DayNumber - booking.EndDate.DayNumber);
+            booking.LateFee = lateDays == 0
+                ? 0m
+                : booking.Items.Sum(i => i.RentalPrice * i.Quantity) * lateDays * _opt.LateFeeMultiplier;
         }
 
         booking.Status = request.Status;

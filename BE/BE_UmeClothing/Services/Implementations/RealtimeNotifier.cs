@@ -22,10 +22,14 @@ public class RealtimeNotifier : IRealtimeNotifier
             () => _hub.Clients.Groups(RealtimeGroups.Admin, RealtimeGroups.Staff).SendAsync(RealtimeEvents.BookingCreated, e));
 
     /// <summary>Gửi cho đúng customer sở hữu booking + Admin/Staff (để danh sách admin cập nhật ngay). Payload không chứa dữ liệu riêng tư.</summary>
-    public Task BookingStatusChangedAsync(int customerId, BookingStatusChangedEvent e) =>
-        SafeAsync(RealtimeEvents.BookingStatusChanged,
-            () => _hub.Clients.Groups(RealtimeGroups.User(customerId), RealtimeGroups.Admin, RealtimeGroups.Staff)
-                .SendAsync(RealtimeEvents.BookingStatusChanged, e));
+    public Task BookingStatusChangedAsync(int? customerId, BookingStatusChangedEvent e)
+    {
+        var groups = customerId.HasValue
+            ? new[] { RealtimeGroups.User(customerId.Value), RealtimeGroups.Admin, RealtimeGroups.Staff }
+            : new[] { RealtimeGroups.Admin, RealtimeGroups.Staff }; // guest: không có group riêng để báo
+
+        return SafeAsync(RealtimeEvents.BookingStatusChanged, () => _hub.Clients.Groups(groups).SendAsync(RealtimeEvents.BookingStatusChanged, e));
+    }
 
     /// <summary>Broadcast cho mọi client đang kết nối: payload chỉ có ProductId + khoảng ngày.</summary>
     public async Task ProductAvailabilityChangedAsync(IEnumerable<ProductAvailabilityChangedEvent> events)

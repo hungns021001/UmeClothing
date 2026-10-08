@@ -33,13 +33,17 @@ public static class MappingExtensions
             i.StartDate, i.EndDate, i.EndDate.DayNumber - i.StartDate.DayNumber, i.Note);
 
     public static BookingDto ToDto(this Booking b) =>
-        new(b.Id, b.BookingCode, b.StartDate, b.EndDate, b.Status, b.Subtotal, b.Deposit, b.Total,
+        new(b.Id, b.BookingCode, b.StartDate, b.EndDate, b.ActualReturnDate, b.Status,
+            b.Subtotal, b.Deposit, b.LateFee, b.Total, b.Total + b.LateFee,
             b.CustomerNote, b.CreatedAt, b.UpdatedAt, b.Items.Select(i => i.ToDto()).ToList());
 
     public static AdminBookingDto ToAdminDto(this Booking b) =>
-        new(b.Id, b.BookingCode, b.CustomerId, b.Customer?.FullName ?? string.Empty,
-            b.Customer?.Email ?? string.Empty, b.Customer?.Phone,
-            b.StartDate, b.EndDate, b.Status, b.Subtotal, b.Deposit, b.Total,
+        new(b.Id, b.BookingCode, b.IsGuest, b.CustomerId,
+            b.IsGuest ? (b.GuestName ?? string.Empty) : (b.Customer?.FullName ?? string.Empty),
+            b.IsGuest ? null : b.Customer?.Email,
+            b.IsGuest ? b.GuestPhone : b.Customer?.Phone,
+            b.StartDate, b.EndDate, b.ActualReturnDate, b.Status,
+            b.Subtotal, b.Deposit, b.LateFee, b.Total, b.Total + b.LateFee,
             b.CustomerNote, b.AdminNote, b.CreatedAt, b.UpdatedAt,
             b.Items.Select(i => i.ToDto()).ToList());
 }

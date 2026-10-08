@@ -35,4 +35,10 @@ public class AdminController : ApiControllerBase
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> SetCustomerStatus(int id, [FromBody] SetCustomerActiveRequest request, CancellationToken ct) =>
         Success(await _admin.SetCustomerActiveAsync(id, request.IsActive, ct), request.IsActive ? "Đã mở khóa tài khoản." : "Đã khóa tài khoản.");
+
+    /// <summary>Doanh thu theo kỳ. groupBy: day | week | month (mặc định day).</summary>
+    [HttpGet("revenue")]
+    public async Task<IActionResult> Revenue(
+        [FromQuery] DateOnly from, [FromQuery] DateOnly to, [FromQuery] string groupBy = "day", CancellationToken ct = default) =>
+        Success(await _admin.GetRevenueReportAsync(from, to, groupBy, ct));
 }

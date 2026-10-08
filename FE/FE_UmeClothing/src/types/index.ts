@@ -141,10 +141,17 @@ export interface Booking {
   bookingCode: string;
   startDate: string;
   endDate: string;
+  /** Có giá trị sau khi chuyển sang Returned. */
+  actualReturnDate: string | null;
   status: BookingStatus;
   subtotal: number;
   deposit: number;
+  /** Phụ thu trả muộn, 0 nếu trả đúng/sớm hạn. */
+  lateFee: number;
+  /** Subtotal + Deposit (KHÔNG gồm lateFee). Dùng grandTotal để có tổng cuối cùng. */
   total: number;
+  /** total + lateFee — số tiền thực tế phải thanh toán. */
+  grandTotal: number;
   customerNote: string | null;
   createdAt: string;
   updatedAt: string;
@@ -156,6 +163,21 @@ export interface CreateBookingRequest {
   endDate: string;
   customerNote?: string;
   items: { variantId: number; note?: string }[];
+}
+
+/** Đặt thuê không cần tài khoản. */
+export interface CreateGuestBookingRequest {
+  guestName: string;
+  guestPhone: string;
+  startDate: string;
+  endDate: string;
+  customerNote?: string;
+  items: { variantId: number; note?: string }[];
+}
+
+export interface BookingLookupRequest {
+  bookingCode: string;
+  phone: string;
 }
 
 // ---- Realtime payloads (camelCase, enum dạng chuỗi) ----
@@ -197,11 +219,32 @@ export interface DashboardStats {
 }
 
 export interface AdminBooking extends Booking {
-  customerId: number;
+  isGuest: boolean;
+  /** null nếu là khách vãng lai. */
+  customerId: number | null;
+  /** Tên khách (tài khoản hoặc guest). */
   customerName: string;
-  customerEmail: string;
+  /** null nếu là khách vãng lai (guest không có email). */
+  customerEmail: string | null;
   customerPhone: string | null;
   adminNote: string | null;
+}
+
+/** Doanh thu gộp theo ngày/tuần/tháng — chỉ tính đơn Completed. */
+export interface RevenuePeriod {
+  periodStart: string;
+  rentalRevenue: number;
+  lateFeeRevenue: number;
+  totalRevenue: number;
+  bookingCount: number;
+}
+
+export interface RevenueReport {
+  groupBy: 'day' | 'week' | 'month';
+  from: string;
+  to: string;
+  grandTotal: number;
+  periods: RevenuePeriod[];
 }
 
 export interface CustomerListItem {

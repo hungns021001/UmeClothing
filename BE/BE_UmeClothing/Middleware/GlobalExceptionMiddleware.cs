@@ -2,6 +2,7 @@ using BE_UmeClothing.DTOs.Common;
 using BE_UmeClothing.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+
 namespace BE_UmeClothing.Middleware;
 
 public class GlobalExceptionMiddleware

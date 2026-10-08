@@ -29,20 +29,16 @@ public static class DbSeeder
         if (await db.Users.AnyAsync(u => u.Role == UserRole.Admin || u.Role == UserRole.Staff))
             return;
 
-        var adminEmail = config["Seed:AdminEmail"];
         var adminPassword = config["Seed:AdminPassword"];
-        var staffEmail = config["Seed:StaffEmail"];
         var staffPassword = config["Seed:StaffPassword"];
-        if (string.IsNullOrWhiteSpace(adminEmail) || string.IsNullOrWhiteSpace(adminPassword) ||
-            string.IsNullOrWhiteSpace(staffEmail) || string.IsNullOrWhiteSpace(staffPassword))
-            throw new InvalidOperationException(
-                "Cần cấu hình Seed:AdminEmail, Seed:AdminPassword, Seed:StaffEmail và Seed:StaffPassword để seed tài khoản.");
+        if (string.IsNullOrWhiteSpace(adminPassword) || string.IsNullOrWhiteSpace(staffPassword))
+            throw new InvalidOperationException("Cần cấu hình Seed:AdminPassword và Seed:StaffPassword để seed tài khoản.");
 
         db.Users.AddRange(
             new User
             {
                 FullName = "Administrator",
-                Email = adminEmail,
+                Email = "admin@umeclothing.com",
                 Phone = "0900000001",
                 PasswordHash = PasswordHelper.Hash(adminPassword),
                 Role = UserRole.Admin
@@ -50,7 +46,7 @@ public static class DbSeeder
             new User
             {
                 FullName = "Staff Demo",
-                Email = staffEmail,
+                Email = "staff@umeclothing.com",
                 Phone = "0900000002",
                 PasswordHash = PasswordHelper.Hash(staffPassword),
                 Role = UserRole.Staff

@@ -116,6 +116,9 @@ function Navbar() {
             Giỏ hàng
             {cartCount > 0 && <span className="rounded-full bg-brand-600 px-1.5 text-xs font-semibold text-white">{cartCount}</span>}
           </Link>
+          <Link to="/lookup" className="btn-secondary">
+            Tra cứu đơn
+          </Link>
           {loading ? null : user ? (
             <div className="relative">
               <button

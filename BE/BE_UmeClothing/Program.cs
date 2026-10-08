@@ -36,7 +36,10 @@ if (string.IsNullOrWhiteSpace(jwt.Key) || jwt.Key.Length < 32)
 
 // ---------------- Database ----------------
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(config.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(
+    config.GetConnectionString("DefaultConnection"),
+    npgsqlOptions => npgsqlOptions.CommandTimeout(120)
+));
 
 // ---------------- Controllers / JSON / Validation ----------------
 builder.Services.AddControllers()
@@ -197,8 +200,11 @@ if (config.GetValue<bool>("Database:AutoMigrateAndSeed"))
 // ---------------- Pipeline ----------------
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
+if (app.Environment.IsDevelopment())
+{
     app.UseSwagger();
     app.UseSwaggerUI();
+}
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();

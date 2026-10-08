@@ -1,9 +1,7 @@
 import axios, { type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 import type { ApiResponse } from '../types';
 
-export const API_URL: string = (
-  import.meta.env.VITE_API_URL ?? 'https://umeclothing.onrender.com'
-).replace(/\/+$/, '');
+export const API_URL: string = (import.meta.env.VITE_API_URL ?? 'https://localhost:7100').replace(/\/+$/, '');
 
 const TOKEN_KEY = 'ume_token';
 const REFRESH_KEY = 'ume_refresh_token';

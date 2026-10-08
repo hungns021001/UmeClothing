@@ -8,10 +8,12 @@ import AdminCustomersPage from '../pages/admin/AdminCustomersPage';
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage';
 import AdminProductFormPage from '../pages/admin/AdminProductFormPage';
 import AdminProductsPage from '../pages/admin/AdminProductsPage';
+import AdminRevenuePage from '../pages/admin/AdminRevenuePage';
 import BookingDetailPage from '../pages/BookingDetailPage';
 import CartPage from '../pages/CartPage';
 import CategoryPage from '../pages/CategoryPage';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage';
+import LookupBookingPage from '../pages/LookupBookingPage';
 import HomePage from '../pages/HomePage';
 import LoginPage from '../pages/LoginPage';
 import MyBookingsPage from '../pages/MyBookingsPage';
@@ -34,6 +36,7 @@ export default function AppRouter() {
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />
         <Route path="forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="lookup" element={<LookupBookingPage />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="profile" element={<ProfilePage />} />
@@ -57,6 +60,7 @@ export default function AppRouter() {
           <Route path="bookings" element={<AdminBookingsPage />} />
           <Route path="customers" element={<AdminCustomersPage />} />
           <Route path="calendar" element={<AdminCalendarPage />} />
+          <Route path="revenue" element={<AdminRevenuePage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Route>

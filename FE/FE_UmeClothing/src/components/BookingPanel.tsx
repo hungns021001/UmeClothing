@@ -14,6 +14,7 @@ import { formatCurrency, formatDate } from '../utils/format';
 import AvailabilityCalendar from './AvailabilityCalendar';
 import ConfirmModal from './ConfirmModal';
 import ErrorState from './ErrorState';
+import GuestContactFields, { validateGuestContact, type GuestContact } from './GuestContactFields';
 import { Skeleton } from './Skeleton';
 
 /** Đặt thuê cho MỘT size cụ thể (variant) của sản phẩm — mỗi size có lịch riêng. */
@@ -30,6 +31,9 @@ export default function BookingPanel({ product, variant }: { product: Product; v
   const [note, setNote] = useState('');
   const [calendarMessage, setCalendarMessage] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [guestMode, setGuestMode] = useState(false);
+  const [guest, setGuest] = useState<GuestContact>({ name: '', phone: '' });
+  const [guestError, setGuestError] = useState<string | null>(null);
 
   const bookable = product.status === 'Available' && variant.status === 'Available';
 
@@ -56,12 +60,21 @@ export default function BookingPanel({ product, variant }: { product: Product; v
 
   const createMutation = useMutation({
     mutationFn: () =>
-      bookingsApi.create({
-        startDate: startDate as string,
-        endDate: endDate as string,
-        customerNote: note.trim() || undefined,
-        items: [{ variantId: variant.id }],
-      }),
+      isAuthenticated
+        ? bookingsApi.create({
+            startDate: startDate as string,
+            endDate: endDate as string,
+            customerNote: note.trim() || undefined,
+            items: [{ variantId: variant.id }],
+          })
+        : bookingsApi.createGuest({
+            guestName: guest.name.trim(),
+            guestPhone: guest.phone.trim(),
+            startDate: startDate as string,
+            endDate: endDate as string,
+            customerNote: note.trim() || undefined,
+            items: [{ variantId: variant.id }],
+          }),
     onSuccess: (booking) => {
       setConfirmOpen(false);
       toast('success', `Đặt thuê thành công (${booking.bookingCode}). Đơn đang chờ cửa hàng xác nhận.`);
@@ -100,8 +113,9 @@ export default function BookingPanel({ product, variant }: { product: Product; v
 
   const handleBookClick = () => {
     if (!isAuthenticated) {
-      navigate('/login', { state: { from: location.pathname } });
-      return;
+      const err = validateGuestContact(guest);
+      setGuestError(err);
+      if (err) return;
     }
     setConfirmOpen(true);
   };
@@ -226,14 +240,38 @@ export default function BookingPanel({ product, variant }: { product: Product; v
         <p className="text-sm text-slate-500">Tài khoản {user?.role} không thể đặt thuê. Hãy dùng tài khoản khách hàng.</p>
       )}
 
-      <button
-        type="button"
-        className="btn-primary w-full py-3"
-        disabled={isAuthenticated ? !canBook : !startDate || !endDate || !isAvailable || tooLong}
-        onClick={handleBookClick}
-      >
-        {isAuthenticated ? 'Đặt thuê ngay' : 'Đăng nhập để đặt thuê'}
-      </button>
+      {!isAuthenticated && (startDate && endDate) && (
+        guestMode ? (
+          <>
+            <GuestContactFields value={guest} onChange={setGuest} />
+            {guestError && (
+              <p className="text-sm text-red-600" role="alert">
+                {guestError}
+              </p>
+            )}
+          </>
+        ) : (
+          <div className="flex gap-2">
+            <button type="button" className="btn-secondary flex-1" onClick={() => navigate('/login', { state: { from: location.pathname } })}>
+              Đăng nhập để đặt
+            </button>
+            <button type="button" className="btn-secondary flex-1" onClick={() => setGuestMode(true)}>
+              Đặt không cần tài khoản
+            </button>
+          </div>
+        )
+      )}
+
+      {(isAuthenticated || guestMode) && (
+        <button
+          type="button"
+          className="btn-primary w-full py-3"
+          disabled={isAuthenticated ? !canBook : !startDate || !endDate || !isAvailable || tooLong}
+          onClick={handleBookClick}
+        >
+          Đặt thuê ngay
+        </button>
+      )}
 
       {!(isAuthenticated && !isCustomer) &&
         (cart.has(variant.id) ? (
@@ -267,6 +305,11 @@ export default function BookingPanel({ product, variant }: { product: Product; v
             {product.name} — Size {variant.size}
           </strong>
         </p>
+        {!isAuthenticated && (
+          <p className="mt-1 text-slate-600">
+            {guest.name} · {guest.phone}
+          </p>
+        )}
         {startDate && endDate && (
           <p className="mt-1">
             Từ {formatDate(startDate)} đến {formatDate(endDate)} ({days} ngày)

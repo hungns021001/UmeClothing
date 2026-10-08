@@ -7,7 +7,8 @@ namespace BE_UmeClothing.Services.Interfaces;
 public interface IRealtimeNotifier
 {
     Task BookingCreatedAsync(BookingCreatedEvent e);
-    Task BookingStatusChangedAsync(int customerId, BookingStatusChangedEvent e);
+    /// <summary>customerId null với đơn của khách vãng lai (guest) — vẫn gửi cho admin/staff, chỉ không có group riêng để báo khách.</summary>
+    Task BookingStatusChangedAsync(int? customerId, BookingStatusChangedEvent e);
     Task ProductAvailabilityChangedAsync(IEnumerable<ProductAvailabilityChangedEvent> events);
     Task DashboardUpdatedAsync(DashboardStatsDto stats);
 }

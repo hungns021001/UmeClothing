@@ -30,6 +30,10 @@ public class BookingOptions
 
     public int PendingSweepMinutes { get; set; } = 5;
 
+    /// <summary>Phụ thu trả muộn = RentalPrice/ngày của từng item × số ngày trễ × hệ số này.
+    /// Mặc định 1.0 = tính bằng đúng giá thuê ngày thường cho mỗi ngày trễ.</summary>
+    public decimal LateFeeMultiplier { get; set; } = 1.0m;
+
     public DateOnly Today() => DateOnly.FromDateTime(DateTime.UtcNow.AddHours(UtcOffsetHours));
 }
 

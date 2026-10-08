@@ -19,7 +19,7 @@ public class AdminService : IAdminService
         _refreshTokens = refreshTokens;
     }
 
-    /// <summary>Doanh thu = tổng Subtotal (tiền thuê, không gồm tiền cọc hoàn lại) của các booking Completed.</summary>
+    /// <summary>Doanh thu = Subtotal + LateFee (tiền thuê + phụ thu trả muộn, không gồm tiền cọc hoàn lại) của các booking Completed.</summary>
     public async Task<DashboardStatsDto> GetDashboardStatsAsync(CancellationToken ct = default)
     {
         var totalProducts = await _db.Products.CountAsync(ct);
@@ -34,7 +34,7 @@ public class AdminService : IAdminService
 
         var revenue = await _db.Bookings.AsNoTracking()
             .Where(b => b.Status == BookingStatus.Completed)
-            .SumAsync(b => (decimal?)b.Subtotal, ct) ?? 0m;
+            .SumAsync(b => (decimal?)(b.Subtotal + b.LateFee), ct) ?? 0m;
 
         return new DashboardStatsDto(
             totalProducts, totalCustomers, byStatus.Sum(x => x.Count),
@@ -77,9 +77,6 @@ public class AdminService : IAdminService
 
         if (!isActive)
         {
-            // Thu hồi refresh token ngăn được việc lấy access token MỚI ngay lập tức. Access token đã phát hành
-            // trước đó vẫn còn hiệu lực đến khi hết hạn (tối đa Jwt:ExpiryMinutes, mặc định 15 phút) — đây là
-            // giới hạn còn lại đã biết, không loại bỏ hoàn toàn được nếu không có danh sách JWT bị thu hồi.
             await _refreshTokens.RevokeAllForUserAsync(customerId, ct);
         }
 
@@ -105,7 +102,54 @@ public class AdminService : IAdminService
             .Select(i => new CalendarItemDto(
                 i.BookingId, i.Booking.BookingCode, i.ProductVariantId, i.ProductVariant.ProductId,
                 i.ProductVariant.Product.Name, i.Size,
-                i.StartDate, i.EndDate, i.Booking.Status, i.Booking.Customer.FullName))
+                i.StartDate, i.EndDate, i.Booking.Status,
+                i.Booking.Customer != null ? i.Booking.Customer.FullName : (i.Booking.GuestName ?? "")))
             .ToListAsync(ct);
+    }
+
+    /// <summary>
+    /// Gộp theo "thời điểm hoàn tất" = UpdatedAt của booking tại lúc Status trở thành Completed. Gộp trong bộ
+    /// nhớ (C#) thay vì SQL GROUP BY theo tuần/tháng để tránh dịch LINQ phức tạp sang T-SQL và để cùng logic
+    /// chạy được trên cả SQL Server lẫn SQLite (test).
+    /// </summary>
+    public async Task<RevenueReportDto> GetRevenueReportAsync(DateOnly from, DateOnly to, string groupBy, CancellationToken ct = default)
+    {
+        if (to <= from)
+            throw new BadRequestException("Khoảng ngày không hợp lệ.");
+        if (to.DayNumber - from.DayNumber > 366 * 2)
+            throw new BadRequestException("Chỉ được xem tối đa 2 năm mỗi lần.");
+
+        var normalizedGroupBy = groupBy.Trim().ToLowerInvariant();
+        if (normalizedGroupBy is not ("day" or "week" or "month"))
+            throw new BadRequestException("groupBy phải là day, week hoặc month.");
+
+        var fromUtc = from.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+        var toUtc = to.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+
+        var completed = await _db.Bookings.AsNoTracking()
+            .Where(b => b.Status == BookingStatus.Completed && b.UpdatedAt >= fromUtc && b.UpdatedAt < toUtc)
+            .Select(b => new { b.UpdatedAt, b.Subtotal, b.LateFee })
+            .ToListAsync(ct);
+
+        DateOnly BucketStart(DateOnly day) => normalizedGroupBy switch
+        {
+            "week" => day.AddDays(-(((int)day.DayOfWeek + 6) % 7)),
+            "month" => new DateOnly(day.Year, day.Month, 1),
+            _ => day
+        };
+
+        var periods = completed
+            .Select(b => new { Day = DateOnly.FromDateTime(b.UpdatedAt), b.Subtotal, b.LateFee })
+            .GroupBy(x => BucketStart(x.Day))
+            .Select(g => new RevenuePeriodDto(
+                g.Key,
+                g.Sum(x => x.Subtotal),
+                g.Sum(x => x.LateFee),
+                g.Sum(x => x.Subtotal + x.LateFee),
+                g.Count()))
+            .OrderBy(p => p.PeriodStart)
+            .ToList();
+
+        return new RevenueReportDto(normalizedGroupBy, from, to, periods.Sum(p => p.TotalRevenue), periods);
     }
 }

@@ -175,8 +175,9 @@ public class AuthService : IAuthService
         await _email.SendAsync(
             user.Email,
             "Mã xác nhận đặt lại mật khẩu — UmeClothing",
-            $"Mã xác nhận của bạn là: {code} " +
-            "Mã có hiệu lực trong {_resetOptions.ExpiryMinutes} phút. " +
+            $"Mã xác nhận của bạn là: {code}" +
+
+"Mã có hiệu lực trong {_resetOptions.ExpiryMinutes} phút. " +
             "Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này.",
             ct);
     }

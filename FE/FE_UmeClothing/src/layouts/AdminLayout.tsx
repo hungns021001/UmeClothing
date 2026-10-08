@@ -13,6 +13,7 @@ const NAV = [
   { to: '/admin/bookings', label: 'Đơn thuê', end: false },
   { to: '/admin/customers', label: 'Khách hàng', end: false },
   { to: '/admin/calendar', label: 'Lịch thuê', end: false },
+  { to: '/admin/revenue', label: 'Doanh thu', end: false },
 ];
 
 const STATUS_UI: Record<ConnectionStatus, { dot: string; label: string }> = {
