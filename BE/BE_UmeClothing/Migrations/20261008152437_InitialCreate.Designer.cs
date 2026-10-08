@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BE_UmeClothing.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261008150540_UpdateDatabase")]
-    partial class UpdateDatabase
+    [Migration("20261008152437_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

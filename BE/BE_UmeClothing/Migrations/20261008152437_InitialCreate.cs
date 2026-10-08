@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace BE_UmeClothing.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate1 : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -85,9 +85,13 @@ namespace BE_UmeClothing.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     BookingCode = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
-                    CustomerId = table.Column<int>(type: "integer", nullable: false),
+                    CustomerId = table.Column<int>(type: "integer", nullable: true),
+                    GuestName = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: true),
+                    GuestPhone = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
                     StartDate = table.Column<DateOnly>(type: "date", nullable: false),
                     EndDate = table.Column<DateOnly>(type: "date", nullable: false),
+                    ActualReturnDate = table.Column<DateOnly>(type: "date", nullable: true),
+                    LateFee = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
                     Subtotal = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
                     Deposit = table.Column<decimal>(type: "numeric(18,2)", nullable: false),
@@ -257,6 +261,11 @@ namespace BE_UmeClothing.Migrations
                 name: "IX_Bookings_CustomerId",
                 table: "Bookings",
                 column: "CustomerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Bookings_GuestPhone",
+                table: "Bookings",
+                column: "GuestPhone");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Bookings_Status_CreatedAt",
