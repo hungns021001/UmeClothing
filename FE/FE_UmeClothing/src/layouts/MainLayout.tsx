@@ -6,6 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { useRealtimeEvent } from '../contexts/RealtimeContext';
 import { useToast } from '../contexts/ToastContext';
+import { FooterShopLinks, FloatingShopContact } from '../components/ShopContact';
 import type { BookingStatusChangedEvent } from '../types';
 import { BOOKING_STATUS_LABEL } from '../utils/labels';
 
@@ -244,9 +245,12 @@ function Navbar() {
 function Footer() {
   return (
     <footer className="mt-16 border-t border-slate-200 bg-white">
-      <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-8 text-sm text-slate-500 sm:flex-row">
-        <span>© {new Date().getFullYear()} UmeClothing. Dịch vụ cho thuê trang phục.</span>
-        <span>Đặt lịch trước – nhận đồ đúng ngày.</span>
+      <div className="mx-auto max-w-7xl px-4 py-10">
+        <FooterShopLinks />
+        <div className="mt-8 flex flex-col gap-2 border-t border-slate-100 pt-5 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+          <span>© {new Date().getFullYear()} UME Dress. Dịch vụ cho thuê trang phục.</span>
+          <span>Đặt lịch trước – nhận đồ đúng ngày.</span>
+        </div>
       </div>
     </footer>
   );
@@ -262,6 +266,7 @@ export default function MainLayout() {
         <Outlet />
       </main>
       <Footer />
+      <FloatingShopContact />
     </div>
   );
 }

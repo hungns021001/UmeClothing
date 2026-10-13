@@ -6,6 +6,7 @@ import { productsApi } from '../api/products';
 import EmptyState from '../components/EmptyState';
 import ErrorState from '../components/ErrorState';
 import ProductCard from '../components/ProductCard';
+import { CustomerFeedbackSection, ShopContactSection } from '../components/ShopContact';
 import { ProductGridSkeleton, Skeleton } from '../components/Skeleton';
 
 export default function HomePage() {
@@ -17,11 +18,11 @@ export default function HomePage() {
 
   return (
     <div className="space-y-14">
-      <section className="overflow-hidden rounded-2xl bg-gradient-to-br from-brand-700 via-brand-600 to-brand-400 px-6 py-14 text-white sm:px-12 sm:py-20">
-        <p className="text-sm font-medium uppercase tracking-widest text-brand-100">Cho thuê trang phục</p>
+      <section className="overflow-hidden rounded-2xl bg-gradient-to-br from-brand-900 via-brand-700 to-brand-500 px-6 py-14 text-white shadow-sm sm:px-12 sm:py-20">
+        <p className="text-sm font-semibold uppercase tracking-widest text-brand-100">UME Dress · Kỳ Anh, Hà Tĩnh</p>
         <h1 className="mt-3 max-w-2xl text-3xl font-bold leading-tight sm:text-5xl">Mặc đẹp cho mọi dịp, không cần sở hữu.</h1>
         <p className="mt-4 max-w-xl text-brand-50">
-          Váy dạ hội, vest, sơ mi, phụ kiện… Chọn ngày, kiểm tra lịch trống theo thời gian thực và đặt thuê chỉ trong vài bước.
+          Cho thuê váy, áo dài dự tiệc và chụp ảnh. Giá thuê từ 100.000đ – ghé shop tại Kỳ Anh hoặc nhắn để được tư vấn.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Link to="/products" className="btn bg-white text-brand-700 hover:bg-brand-50">
@@ -30,6 +31,9 @@ export default function HomePage() {
           <Link to="/register" className="btn border border-white/60 text-white hover:bg-white/10">
             Tạo tài khoản
           </Link>
+          <a href="#lien-he" className="btn border border-white/60 text-white hover:bg-white/10">
+            Thông tin cửa hàng
+          </a>
         </div>
       </section>
 
@@ -82,6 +86,9 @@ export default function HomePage() {
           </div>
         )}
       </section>
+
+      <ShopContactSection />
+      <CustomerFeedbackSection />
     </div>
   );
 }
