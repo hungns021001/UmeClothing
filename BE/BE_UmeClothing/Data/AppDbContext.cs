@@ -73,8 +73,7 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<ProductVariant>(e =>
         {
-            // Tên bảng "ProductVariants" được dùng trong câu lệnh khóa UPDLOCK ở BookingService
-            // (đây là đơn vị thực sự bị tranh chấp khi đặt thuê, không phải Product).
+            // Tên bảng được dùng trong câu lệnh SELECT FOR UPDATE ở BookingService.
             e.ToTable("ProductVariants");
             e.HasKey(x => x.Id);
             e.Property(x => x.Size).HasMaxLength(30).IsRequired();
@@ -115,7 +114,7 @@ public class AppDbContext : DbContext
             e.Property(x => x.LateFee).HasColumnType("decimal(18,2)");
             e.Property(x => x.CustomerNote).HasMaxLength(1000);
             e.Property(x => x.AdminNote).HasMaxLength(1000);
-            e.Property(x => x.RowVersion).IsRowVersion();
+            e.Property<uint>("xmin").IsRowVersion();
 
             e.HasIndex(x => x.BookingCode).IsUnique();
             e.HasIndex(x => x.CustomerId);

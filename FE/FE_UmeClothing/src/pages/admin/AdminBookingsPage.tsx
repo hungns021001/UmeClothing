@@ -58,12 +58,12 @@ function BookingDetailModal({ id, onClose }: { id: number; onClose: () => void }
   const b = detailQuery.data;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/50 p-4" onMouseDown={() => !pending && onClose()}>
+    <div className="fixed inset-0 z-50 flex animate-fade-in items-start justify-center overflow-y-auto bg-slate-900/50 p-4" onMouseDown={() => !pending && onClose()}>
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Chi tiết đơn thuê"
-        className="my-8 w-full max-w-2xl rounded-xl bg-white p-6 shadow-xl"
+        className="my-8 w-full max-w-2xl animate-rise-in rounded-xl bg-white p-6 shadow-xl"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-3">
@@ -287,14 +287,15 @@ export default function AdminBookingsPage() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {data.items.map((b) => (
-                <tr key={b.id} className="hover:bg-slate-50">
+                <tr key={b.id} className="transition-colors duration-150 hover:bg-slate-50">
                   <td className="whitespace-nowrap px-4 py-3 font-semibold text-brand-700">{b.bookingCode}</td>
                   <td className="px-4 py-3">
                     <p className="font-medium text-slate-900">
                       {b.customerName}
                       {b.isGuest && <span className="ml-1.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">Vãng lai</span>}
                     </p>
-                    <p className="text-xs text-slate-400">{b.customerEmail ?? b.customerPhone}</p>
+                    {b.customerEmail && <p className="text-xs text-slate-400">{b.customerEmail}</p>}
+                    {b.customerPhone && <p className="text-xs text-slate-500">{b.customerPhone}</p>}
                   </td>
                   <td className="px-4 py-3 text-slate-600">
                     {b.items.slice(0, 2).map((i) => `${i.productName} (${i.size})`).join(', ')}
@@ -303,7 +304,7 @@ export default function AdminBookingsPage() {
                   <td className="whitespace-nowrap px-4 py-3 text-slate-600">
                     {formatDate(b.startDate)} → {formatDate(b.endDate)}
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-right font-medium">{formatCurrency(b.total)}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-right font-medium">{formatCurrency(b.grandTotal)}</td>
                   <td className="px-4 py-3">
                     <StatusBadge status={b.status} />
                   </td>

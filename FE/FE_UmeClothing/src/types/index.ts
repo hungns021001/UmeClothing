@@ -139,6 +139,7 @@ export interface BookingItem {
 export interface Booking {
   id: number;
   bookingCode: string;
+  isGuest: boolean;
   startDate: string;
   endDate: string;
   /** Có giá trị sau khi chuyển sang Returned. */
@@ -178,6 +179,12 @@ export interface CreateGuestBookingRequest {
 export interface BookingLookupRequest {
   bookingCode: string;
   phone: string;
+}
+
+export interface BookingPhoneLookupRequest {
+  phone: string;
+  page?: number;
+  pageSize?: number;
 }
 
 // ---- Realtime payloads (camelCase, enum dạng chuỗi) ----

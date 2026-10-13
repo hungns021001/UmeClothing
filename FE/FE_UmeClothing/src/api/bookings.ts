@@ -1,5 +1,13 @@
 import { cleanParams, http, unwrap } from './client';
-import type { Booking, BookingLookupRequest, BookingStatus, CreateBookingRequest, CreateGuestBookingRequest, PagedResult } from '../types';
+import type {
+  Booking,
+  BookingLookupRequest,
+  BookingStatus,
+  CreateBookingRequest,
+  CreateGuestBookingRequest,
+  BookingPhoneLookupRequest,
+  PagedResult,
+} from '../types';
 
 export const bookingsApi = {
   create: (payload: CreateBookingRequest) => unwrap<Booking>(http.post('/api/bookings', payload)),
@@ -12,5 +20,7 @@ export const bookingsApi = {
 
   // Tra cứu đơn khách vãng lai bằng Mã đơn + SĐT (không cần đăng nhập).
   lookup: (payload: BookingLookupRequest) => unwrap<Booking>(http.post('/api/bookings/lookup', payload)),
+  lookupByPhone: (payload: BookingPhoneLookupRequest) =>
+    unwrap<PagedResult<Booking>>(http.post('/api/bookings/lookup/phone', payload)),
   cancelByLookup: (payload: BookingLookupRequest) => unwrap<Booking>(http.put('/api/bookings/lookup/cancel', payload)),
 };

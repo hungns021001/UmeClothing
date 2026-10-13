@@ -50,6 +50,12 @@ public class BookingsController : ApiControllerBase
     public async Task<IActionResult> Lookup([FromBody] BookingLookupRequest request, CancellationToken ct) =>
         Success(await _bookings.LookupGuestAsync(request, ct));
 
+    [HttpPost("lookup/phone")]
+    [AllowAnonymous]
+    [EnableRateLimiting("auth")]
+    public async Task<IActionResult> LookupByPhone([FromBody] BookingPhoneLookupRequest request, CancellationToken ct) =>
+        Success(await _bookings.LookupByPhoneAsync(request, ct));
+
     [HttpPut("lookup/cancel")]
     [AllowAnonymous]
     [EnableRateLimiting("auth")]

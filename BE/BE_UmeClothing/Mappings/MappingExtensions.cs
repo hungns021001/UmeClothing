@@ -33,7 +33,7 @@ public static class MappingExtensions
             i.StartDate, i.EndDate, i.EndDate.DayNumber - i.StartDate.DayNumber, i.Note);
 
     public static BookingDto ToDto(this Booking b) =>
-        new(b.Id, b.BookingCode, b.StartDate, b.EndDate, b.ActualReturnDate, b.Status,
+        new(b.Id, b.BookingCode, b.IsGuest, b.StartDate, b.EndDate, b.ActualReturnDate, b.Status,
             b.Subtotal, b.Deposit, b.LateFee, b.Total, b.Total + b.LateFee,
             b.CustomerNote, b.CreatedAt, b.UpdatedAt, b.Items.Select(i => i.ToDto()).ToList());
 

@@ -44,8 +44,5 @@ public class Booking
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-    /// <summary>Optimistic concurrency cho các thao tác đổi trạng thái đồng thời.</summary>
-    public byte[] RowVersion { get; set; } = Array.Empty<byte>();
-
     public ICollection<BookingItem> Items { get; set; } = new List<BookingItem>();
 }

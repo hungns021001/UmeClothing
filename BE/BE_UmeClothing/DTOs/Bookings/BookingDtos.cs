@@ -61,6 +61,21 @@ public class BookingLookupRequest
     public string Phone { get; set; } = string.Empty;
 }
 
+/// <summary>Tra cứu đơn theo số điện thoại.</summary>
+public class BookingPhoneLookupRequest
+{
+    [Required(ErrorMessage = "Số điện thoại là bắt buộc.")]
+    [StringLength(20)]
+    [RegularExpression(@"^\+?[0-9\s\-]{8,20}$", ErrorMessage = "Số điện thoại không hợp lệ.")]
+    public string Phone { get; set; } = string.Empty;
+
+    [Range(1, int.MaxValue)]
+    public int Page { get; set; } = 1;
+
+    [Range(1, 50)]
+    public int PageSize { get; set; } = 10;
+}
+
 public class UpdateBookingStatusRequest
 {
     public BookingStatus Status { get; set; }
@@ -95,7 +110,7 @@ public record BookingItemDto(
 
 /// <summary>DTO cho customer/guest: không có AdminNote, không có PII của khách khác.</summary>
 public record BookingDto(
-    int Id, string BookingCode, DateOnly StartDate, DateOnly EndDate, DateOnly? ActualReturnDate,
+    int Id, string BookingCode, bool IsGuest, DateOnly StartDate, DateOnly EndDate, DateOnly? ActualReturnDate,
     BookingStatus Status, decimal Subtotal, decimal Deposit, decimal LateFee, decimal Total, decimal GrandTotal,
     string? CustomerNote, DateTime CreatedAt, DateTime UpdatedAt, List<BookingItemDto> Items);
 

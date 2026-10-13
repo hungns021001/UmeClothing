@@ -17,6 +17,8 @@ public interface IBookingService
     /// <summary>Tra cứu đơn của khách vãng lai bằng Mã đơn + SĐT (cả hai phải khớp). Ném NotFoundException nếu sai.</summary>
     Task<BookingDto> LookupGuestAsync(BookingLookupRequest request, CancellationToken ct = default);
 
+    Task<PagedResult<BookingDto>> LookupByPhoneAsync(BookingPhoneLookupRequest request, CancellationToken ct = default);
+
     /// <summary>Khách vãng lai tự hủy đơn (chỉ khi đang Pending), xác thực bằng Mã đơn + SĐT.</summary>
     Task<BookingDto> CancelGuestAsync(BookingLookupRequest request, CancellationToken ct = default);
 

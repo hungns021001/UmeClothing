@@ -100,7 +100,11 @@ export default function CartPage() {
       clear();
       toast('success', `Đặt thuê thành công (${booking.bookingCode}). Đơn đang chờ cửa hàng xác nhận.`);
       void queryClient.invalidateQueries({ queryKey: ['bookings'] });
-      navigate(`/bookings/${booking.id}`);
+      if (isAuthenticated) {
+        navigate(`/bookings/${booking.id}`);
+      } else {
+        navigate(`/lookup?phone=${encodeURIComponent(guest.phone.trim())}`);
+      }
     },
     onError: (err) => {
       setConfirmOpen(false);

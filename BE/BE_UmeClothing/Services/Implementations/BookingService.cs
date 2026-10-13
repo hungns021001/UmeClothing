@@ -230,6 +230,25 @@ public class BookingService : IBookingService
         return booking.ToDto();
     }
 
+    public async Task<PagedResult<BookingDto>> LookupByPhoneAsync(BookingPhoneLookupRequest request, CancellationToken ct = default)
+    {
+        var phone = NormalizePhone(request.Phone);
+        if (phone.Length < 8)
+            throw new BadRequestException("Số điện thoại không hợp lệ.");
+
+        var page = Math.Max(1, request.Page);
+        var pageSize = Math.Clamp(request.PageSize, 1, 50);
+        var query = Detailed().AsNoTracking().Where(b =>
+            b.GuestPhone == phone ||
+            (b.Customer != null && b.Customer.Phone != null &&
+             b.Customer.Phone.Replace(" ", "").Replace("-", "").Replace("+", "") == phone));
+        var total = await query.CountAsync(ct);
+        var items = await query.OrderByDescending(b => b.CreatedAt).ThenByDescending(b => b.Id)
+            .Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(ct);
+
+        return new PagedResult<BookingDto>(items.Select(b => b.ToDto()).ToList(), page, pageSize, total);
+    }
+
     public async Task<BookingDto> CancelGuestAsync(BookingLookupRequest request, CancellationToken ct = default)
     {
         var booking = await FindGuestBookingAsync(request, ct);
@@ -427,16 +446,15 @@ public class BookingService : IBookingService
             .AsSplitQuery();
 
     /// <summary>
-    /// Khóa các hàng ProductVariant bằng UPDLOCK/HOLDLOCK (SQL Server) — đây là đơn vị thực sự bị tranh chấp
-    /// khi đặt thuê, không phải Product. Để virtual để test với SQLite có thể thay bằng no-op;
-    /// test tương tranh thật chạy với SQL Server (xem BE_UmeClothing.Tests).
+    /// Khóa các hàng ProductVariant bằng SELECT FOR UPDATE (PostgreSQL) — đây là đơn vị thực sự bị tranh chấp
+    /// khi đặt thuê, không phải Product. Khóa được giữ đến hết transaction.
     /// </summary>
     protected virtual async Task LockVariantsAsync(IEnumerable<int> variantIds, CancellationToken ct)
     {
         foreach (var id in variantIds.Distinct().OrderBy(x => x))
         {
             await _db.Database.ExecuteSqlInterpolatedAsync(
-                $"SELECT Id FROM ProductVariants WITH (UPDLOCK, HOLDLOCK) WHERE Id = {id}", ct);
+                $"SELECT \"Id\" FROM \"ProductVariants\" WHERE \"Id\" = {id} FOR UPDATE", ct);
         }
     }
 
