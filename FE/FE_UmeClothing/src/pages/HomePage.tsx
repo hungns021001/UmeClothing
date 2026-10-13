@@ -95,7 +95,7 @@ export default function HomePage() {
                 <span aria-hidden="true" className="absolute -right-4 -top-5 h-20 w-20 rounded-full border border-brand-100 transition-transform duration-300 group-hover:scale-125" />
                 <span className="relative font-serif text-lg font-semibold text-slate-900">{c.name}</span>
                 <span className="relative flex w-full items-center justify-between text-xs text-slate-500">
-                  <span>{c.productCount} thiết kế</span>
+                  <span>{c.productCount} sản phẩm</span>
                   <span className="text-brand-700 transition-transform group-hover:translate-x-1" aria-hidden="true">↗</span>
                 </span>
               </Link>
