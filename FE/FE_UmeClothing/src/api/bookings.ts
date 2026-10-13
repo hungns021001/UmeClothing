@@ -15,6 +15,8 @@ export const bookingsApi = {
   createGuest: (payload: CreateGuestBookingRequest) => unwrap<Booking>(http.post('/api/bookings/guest', payload)),
   my: (params: { status?: BookingStatus; page?: number; pageSize?: number }) =>
     unwrap<PagedResult<Booking>>(http.get('/api/bookings/my', { params: cleanParams(params) })),
+  myByCode: (bookingCode: string) =>
+    unwrap<Booking>(http.get(`/api/bookings/my/by-code/${encodeURIComponent(bookingCode)}`)),
   get: (id: number) => unwrap<Booking>(http.get(`/api/bookings/${id}`)),
   cancel: (id: number) => unwrap<Booking>(http.put(`/api/bookings/${id}/cancel`)),
 

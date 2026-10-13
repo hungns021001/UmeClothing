@@ -18,6 +18,7 @@ import type { Product, ProductAvailabilityChangedEvent } from '../types';
 import { MAX_RENTAL_DAYS, diffDays } from '../utils/dates';
 import { formatCurrency, formatDate } from '../utils/format';
 import GuestContactFields, { validateGuestContact, type GuestContact } from '../components/GuestContactFields';
+import DepositPaymentOption from '../components/DepositPaymentOption';
 import { resolveImageUrl } from '../utils/image';
 
 export default function CartPage() {
@@ -100,11 +101,13 @@ export default function CartPage() {
       clear();
       toast('success', `Đặt thuê thành công (${booking.bookingCode}). Đơn đang chờ cửa hàng xác nhận.`);
       void queryClient.invalidateQueries({ queryKey: ['bookings'] });
-      if (isAuthenticated) {
-        navigate(`/bookings/${booking.id}`);
-      } else {
-        navigate(`/lookup?phone=${encodeURIComponent(guest.phone.trim())}`);
-      }
+      navigate(`/booking-success/${encodeURIComponent(booking.bookingCode)}`, {
+        state: {
+          booking,
+          customerName: isAuthenticated ? user?.fullName ?? '' : guest.name.trim(),
+          phone: isAuthenticated ? user?.phone ?? '' : guest.phone.trim(),
+        },
+      });
     },
     onError: (err) => {
       setConfirmOpen(false);
@@ -365,7 +368,7 @@ export default function CartPage() {
       <ConfirmModal
         open={confirmOpen}
         title="Xác nhận đặt thuê"
-        confirmLabel="Đặt thuê"
+        confirmLabel="Tạo đơn & xem QR cọc"
         loading={checkoutMutation.isPending}
         onConfirm={() => checkoutMutation.mutate()}
         onCancel={() => setConfirmOpen(false)}
@@ -388,10 +391,17 @@ export default function CartPage() {
           </p>
         )}
         <p className="mt-1">
-          Tạm tính: <strong>{formatCurrency(rental + deposit)}</strong> (đã gồm cọc {formatCurrency(deposit)})
+          Tổng đơn: <strong>{formatCurrency(rental + deposit)}</strong> (gồm tiền thuê và cọc)
         </p>
+        <div className="mt-4">
+          <DepositPaymentOption
+            amount={deposit}
+            customerName={isAuthenticated ? user?.fullName ?? '' : guest.name}
+            phone={isAuthenticated ? user?.phone ?? null : guest.phone}
+          />
+        </div>
         <p className="mt-3 text-xs text-slate-500">
-          Đơn được đặt cho tất cả sản phẩm cùng lúc: nếu một sản phẩm vừa bị người khác đặt, cả đơn sẽ không được tạo. Đơn Pending quá 24 giờ chưa được xác nhận sẽ tự hủy.
+          Đơn được tạo cho tất cả sản phẩm cùng lúc. Shop xác nhận sau khi đối soát tiền cọc; đơn Pending quá 24 giờ chưa được xác nhận sẽ tự hủy.
         </p>
       </ConfirmModal>
     </div>

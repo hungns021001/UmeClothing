@@ -15,6 +15,7 @@ import AvailabilityCalendar from './AvailabilityCalendar';
 import ConfirmModal from './ConfirmModal';
 import ErrorState from './ErrorState';
 import GuestContactFields, { validateGuestContact, type GuestContact } from './GuestContactFields';
+import DepositPaymentOption from './DepositPaymentOption';
 import { Skeleton } from './Skeleton';
 
 /** Đặt thuê cho MỘT size cụ thể (variant) của sản phẩm — mỗi size có lịch riêng. */
@@ -79,7 +80,13 @@ export default function BookingPanel({ product, variant }: { product: Product; v
       setConfirmOpen(false);
       toast('success', `Đặt thuê thành công (${booking.bookingCode}). Đơn đang chờ cửa hàng xác nhận.`);
       void queryClient.invalidateQueries({ queryKey: ['bookings'] });
-      navigate(`/bookings/${booking.id}`);
+      navigate(`/booking-success/${encodeURIComponent(booking.bookingCode)}`, {
+        state: {
+          booking,
+          customerName: isAuthenticated ? user?.fullName ?? '' : guest.name.trim(),
+          phone: isAuthenticated ? user?.phone ?? '' : guest.phone.trim(),
+        },
+      });
     },
     onError: (err) => {
       setConfirmOpen(false);
@@ -295,7 +302,7 @@ export default function BookingPanel({ product, variant }: { product: Product; v
       <ConfirmModal
         open={confirmOpen}
         title="Xác nhận đặt thuê"
-        confirmLabel="Đặt thuê"
+        confirmLabel="Tạo đơn & xem QR cọc"
         loading={createMutation.isPending}
         onConfirm={() => createMutation.mutate()}
         onCancel={() => setConfirmOpen(false)}
@@ -316,10 +323,17 @@ export default function BookingPanel({ product, variant }: { product: Product; v
           </p>
         )}
         <p className="mt-1">
-          Tạm tính: <strong>{formatCurrency(total)}</strong> (đã gồm cọc {formatCurrency(product.depositPrice)})
+          Tổng đơn: <strong>{formatCurrency(total)}</strong> (gồm tiền thuê và cọc)
         </p>
+        <div className="mt-4">
+          <DepositPaymentOption
+            amount={product.depositPrice}
+            customerName={isAuthenticated ? user?.fullName ?? '' : guest.name}
+            phone={isAuthenticated ? user?.phone ?? null : guest.phone}
+          />
+        </div>
         <p className="mt-3 text-xs text-slate-500">
-          Đơn sẽ ở trạng thái “Chờ xác nhận”. Nếu cửa hàng chưa xác nhận trong 24 giờ, đơn sẽ tự động hủy.
+          Đơn ở trạng thái “Chờ xác nhận”. Shop sẽ xác nhận sau khi đối soát tiền cọc; đơn chưa được xác nhận trong 24 giờ sẽ tự động hủy.
         </p>
       </ConfirmModal>
     </div>

@@ -11,6 +11,7 @@ public interface IBookingService
     Task<BookingDto> CreateGuestAsync(CreateGuestBookingRequest request, CancellationToken ct = default);
 
     Task<PagedResult<BookingDto>> GetMyAsync(int customerId, MyBookingQuery query, CancellationToken ct = default);
+    Task<BookingDto> GetMyByCodeAsync(int customerId, string bookingCode, CancellationToken ct = default);
     Task<BookingDto> GetForUserAsync(int userId, bool isStaff, int bookingId, CancellationToken ct = default);
     Task<BookingDto> CancelAsync(int customerId, int bookingId, CancellationToken ct = default);
 

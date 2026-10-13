@@ -9,6 +9,13 @@ export const shopInfo = {
   addressNote: 'Bên cạnh tiệm vàng Kim Khánh Thủy – chợ cũ Kỳ Anh',
   openingHours: '08:00 – 22:00, Thứ 2 – Chủ nhật',
   facebookPageId: '100086918512794',
+  bank: {
+    name: 'VietinBank',
+    accountName: 'TRUONG THI KIM UYEN',
+    accountNumber: '100880874810',
+    branch: 'CN SONG HAN - PGD MY KHE',
+    qrUrl: '/ume-dress-deposit-qr.png',
+  },
 } as const;
 
 export const shopLinks = {

@@ -10,6 +10,7 @@ import AdminProductFormPage from '../pages/admin/AdminProductFormPage';
 import AdminProductsPage from '../pages/admin/AdminProductsPage';
 import AdminRevenuePage from '../pages/admin/AdminRevenuePage';
 import BookingDetailPage from '../pages/BookingDetailPage';
+import BookingSuccessPage from '../pages/BookingSuccessPage';
 import CartPage from '../pages/CartPage';
 import CategoryPage from '../pages/CategoryPage';
 import ForgotPasswordPage from '../pages/ForgotPasswordPage';
@@ -37,6 +38,7 @@ export default function AppRouter() {
         <Route path="register" element={<RegisterPage />} />
         <Route path="forgot-password" element={<ForgotPasswordPage />} />
         <Route path="lookup" element={<LookupBookingPage />} />
+        <Route path="booking-success/:bookingCode" element={<BookingSuccessPage />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="profile" element={<ProfilePage />} />

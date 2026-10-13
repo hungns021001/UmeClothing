@@ -34,6 +34,11 @@ public class BookingsController : ApiControllerBase
     public async Task<IActionResult> GetMy([FromQuery] MyBookingQuery query, CancellationToken ct) =>
         Success(await _bookings.GetMyAsync(CurrentUserId, query, ct));
 
+    [HttpGet("my/by-code/{bookingCode}")]
+    [Authorize(Roles = "Customer")]
+    public async Task<IActionResult> GetMyByCode(string bookingCode, CancellationToken ct) =>
+        Success(await _bookings.GetMyByCodeAsync(CurrentUserId, bookingCode, ct));
+
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id, CancellationToken ct) =>
         Success(await _bookings.GetForUserAsync(CurrentUserId, IsStaff, id, ct));

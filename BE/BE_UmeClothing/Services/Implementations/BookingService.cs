@@ -201,6 +201,16 @@ public class BookingService : IBookingService
         return new PagedResult<BookingDto>(items.Select(b => b.ToDto()).ToList(), page, pageSize, total);
     }
 
+    public async Task<BookingDto> GetMyByCodeAsync(int customerId, string bookingCode, CancellationToken ct = default)
+    {
+        var code = bookingCode.Trim().ToUpperInvariant();
+        var booking = await Detailed().AsNoTracking()
+            .FirstOrDefaultAsync(b => b.CustomerId == customerId && b.BookingCode == code, ct)
+            ?? throw new NotFoundException("Không tìm thấy đơn thuê.");
+
+        return booking.ToDto();
+    }
+
     public async Task<BookingDto> GetForUserAsync(int userId, bool isStaff, int bookingId, CancellationToken ct = default)
     {
         var booking = await Detailed().AsNoTracking().FirstOrDefaultAsync(b => b.Id == bookingId, ct);
