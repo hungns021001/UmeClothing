@@ -68,10 +68,18 @@ function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
-        <Link to="/" className="text-xl font-bold tracking-tight text-brand-700">
-          Ume<span className="text-slate-900">Clothing</span>
+    <header className="sticky top-0 z-40 border-b border-brand-100/80 bg-white/90 shadow-[0_4px_24px_rgba(30,64,175,0.04)] backdrop-blur-xl">
+      <div className="mx-auto flex h-[4.5rem] max-w-7xl items-center justify-between px-4">
+        <Link to="/" className="group inline-flex items-center gap-2.5" aria-label="UME Dress – Trang chủ">
+          <img
+            src="/ume-dress-logo.png"
+            alt=""
+            className="h-12 w-12 rounded-full object-contain transition-transform duration-300 group-hover:rotate-[-5deg] group-hover:scale-105"
+          />
+          <span className="flex flex-col leading-tight">
+            <span className="font-serif text-lg font-semibold tracking-wide text-slate-900">UME Dress</span>
+            <span className="text-[9px] font-medium uppercase tracking-[0.2em] text-slate-500">Thuê để tỏa sáng</span>
+          </span>
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex" aria-label="Điều hướng chính">

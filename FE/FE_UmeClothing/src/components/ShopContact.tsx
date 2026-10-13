@@ -1,53 +1,62 @@
 import { Link } from 'react-router-dom';
 import { shopInfo, shopLinks } from '../config/shop';
 
-function ContactIcon({ kind }: { kind: 'message' | 'location' }) {
-  return kind === 'message' ? (
-    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="h-5 w-5">
+function MessengerLogo() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 40 40" className="h-9 w-9">
+      <circle cx="20" cy="20" r="20" fill="#0866ff" />
       <path
-        d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H5l1.8-3.1A7.5 7.5 0 1 1 20 11.5Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        d="M20 8.5c-7 0-12 4.9-12 11.5 0 3.4 1.4 6.3 3.8 8.2v4.4l4.3-2.4c1.2.3 2.5.5 3.9.5 7 0 12-4.8 12-11.2S27 8.5 20 8.5Z"
+        fill="white"
       />
-      <path d="m8.5 12 2-2 2 2 3-3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="m12.8 23.7 6.1-6.5 3.1 3.1 5.2-3.1-6.1 6.5-3.1-3.1-5.2 3.1Z" fill="#0866ff" />
     </svg>
-  ) : (
-    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className="h-5 w-5">
+  );
+}
+
+function ZaloLogo() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 40 40" className="h-9 w-9">
+      <circle cx="20" cy="20" r="20" fill="#0068ff" />
       <path
-        d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
+        d="M10.5 12.5h19v12.2a2.8 2.8 0 0 1-2.8 2.8h-8.1l-5.2 3v-3h-.1a2.8 2.8 0 0 1-2.8-2.8V12.5Z"
+        fill="white"
       />
-      <circle cx="12" cy="10" r="2.2" stroke="currentColor" strokeWidth="1.8" />
+      <text x="20" y="22.7" textAnchor="middle" fill="#0068ff" fontSize="9" fontWeight="800" fontFamily="Arial, sans-serif">
+        Zalo
+      </text>
     </svg>
   );
 }
 
 export function FloatingShopContact() {
   return (
-    <aside className="fixed bottom-4 right-4 z-40 flex flex-col gap-2 sm:bottom-6 sm:right-6" aria-label="Liên hệ cửa hàng">
+    <aside className="fixed bottom-4 right-4 z-40 flex flex-col gap-3 sm:bottom-6 sm:right-6" aria-label="Liên hệ cửa hàng">
       <a
         href={shopLinks.messenger}
         target="_blank"
         rel="noopener noreferrer"
-        className="group inline-flex min-h-12 items-center gap-2 rounded-full bg-[#0866ff] px-4 text-sm font-semibold text-white shadow-lg transition duration-200 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
+        className="group relative flex h-16 w-16 items-center justify-center rounded-full border-4 border-white bg-white shadow-[0_8px_24px_rgba(8,102,255,0.24)] transition duration-200 hover:-translate-y-1 hover:scale-105 hover:shadow-[0_12px_30px_rgba(8,102,255,0.32)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
         aria-label="Nhắn tin UME Dress qua Messenger"
+        title="Nhắn tin qua Messenger"
       >
-        <ContactIcon kind="message" />
-        <span>Messenger</span>
+        <MessengerLogo />
+        <span className="pointer-events-none absolute right-[calc(100%+0.75rem)] whitespace-nowrap rounded-lg bg-slate-900 px-3 py-2 text-xs font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+          Nhắn qua Messenger
+        </span>
       </a>
       <a
         href={shopLinks.zalo}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex min-h-12 items-center gap-2 rounded-full bg-[#0068ff] px-4 text-sm font-semibold text-white shadow-lg transition duration-200 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
+        className="group relative flex h-16 w-16 items-center justify-center rounded-full border-4 border-white bg-white shadow-[0_8px_24px_rgba(0,104,255,0.24)] transition duration-200 hover:-translate-y-1 hover:scale-105 hover:shadow-[0_12px_30px_rgba(0,104,255,0.32)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2"
         aria-label="Nhắn tin UME Dress qua Zalo"
+        title="Nhắn tin qua Zalo"
       >
-        <ContactIcon kind="message" />
-        <span>Zalo</span>
+        <ZaloLogo />
+        <span className="pointer-events-none absolute right-[calc(100%+0.75rem)] whitespace-nowrap rounded-lg bg-slate-900 px-3 py-2 text-xs font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+          Nhắn qua Zalo
+        </span>
       </a>
     </aside>
   );
@@ -148,8 +157,9 @@ export function FooterShopLinks() {
   return (
     <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
       <div>
-        <Link to="/" className="text-lg font-bold text-brand-700">
-          UME Dress
+        <Link to="/" className="inline-flex items-center gap-3">
+          <img src={shopInfo.logoUrl} alt="" className="h-14 w-14 rounded-full object-contain" loading="lazy" />
+          <span className="text-lg font-bold text-brand-700">UME Dress</span>
         </Link>
         <p className="mt-2 text-sm leading-6 text-slate-500">{shopInfo.description}</p>
         <p className="mt-2 text-sm font-medium text-slate-700">Giá thuê từ {shopInfo.startingPrice}</p>

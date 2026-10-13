@@ -1,5 +1,6 @@
 export const shopInfo = {
   name: 'UME Dress',
+  logoUrl: '/ume-dress-logo.png',
   description: 'Cho thuê váy, áo dài dự tiệc và chụp ảnh.',
   startingPrice: '100.000đ',
   phone: '0359.279.546',
